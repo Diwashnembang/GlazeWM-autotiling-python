@@ -7,17 +7,20 @@ async def main():
     uri = "ws://localhost:6123"
 
     async with websockets.connect(uri) as websocket:
-        # Sende die "hello" Nachricht
         await websocket.send("sub -e window_managed")
 
         while True:
+            json_response = {}
             response = await websocket.recv()
-            json_response = json.loads(response)
             try:
-                sizePercentage = json_response["data"]["managedWindow"][
-                    "tilingSize"
-                ]
-                if sizePercentage <= 0.5:
+                if not response:
+                    raise ValueError("response is empty")
+                json_response = json.loads(response)
+                    
+                sizePercentage = json_response.get("data",{}).get("managedWindow",{}).get(
+                    "tilingSize", None
+                ) 
+                if sizePercentage is not None and sizePercentage <= 0.5:
                     await websocket.send('command toggle-tiling-direction')
             except KeyError:
                 pass
